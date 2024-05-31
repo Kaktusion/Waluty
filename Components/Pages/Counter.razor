@@ -112,10 +112,8 @@ else
         {
             amountCalculated = Math.Round((perfect[FromCurrency] * amount / perfect[ToCurrency]), 2);
             string edit = File.ReadAllText("C:/Log/Log.json");
-            Console.WriteLine(edit);
             var transactions = JsonConvert.DeserializeObject<List<Transaction>>(edit);
             transactions.Add(new Transaction(DateTime.Now,FromCurrency,ToCurrency,amount,amountCalculated));
-            
             File.WriteAllText("C:/Log/Log.json", JsonConvert.SerializeObject(transactions));
 
         }
