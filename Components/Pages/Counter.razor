@@ -1,0 +1,128 @@
+﻿@page "/counter"
+@rendermode InteractiveServer
+@attribute [StreamRendering(true)]
+@using System.Text.RegularExpressions
+@inject BlazorBootstrap.IIdGenerator IdGenerator
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+
+<PageTitle>Przelicznyk</PageTitle>
+<style>
+    #_think {
+        width: 183px;
+    }
+
+    #_2think {
+        width: 183px;
+    }
+</style>
+
+<h1>Przelicznanie</h1>
+
+
+@if (dane != null)
+{
+    <fieldset>
+        <legend>Zamiana</legend>
+        <label>
+            <p>Waluta, z której konwertujemy:</p>
+            <select @bind="FromCurrency">
+                @foreach (var e in dane.Rates)
+                {
+                    <option value="@e.Code"> @e.Currency (@e.Code)</option>
+                }
+            </select>
+
+        </label>
+
+        <label>
+            <p> Waluta, na którą konwertujemy:</p>
+            <select @bind="ToCurrency">
+                @foreach (var e in dane.Rates)
+                {
+                    <option value="@e.Code"> @e.Currency (@e.Code)</option>
+                }
+            </select>
+        </label>
+        <br />
+        <br />
+        <label>
+            Kwota zamieniana:
+            <input id="_think" @bind="amount" min="0" type="number" inputmode="numeric" step="0.01" />
+        </label>
+        <label>
+            Kwota otrzymana:
+            <input id="_2think" placeholder="@amountCalculated" disabled="true" />
+        </label>
+        <br>
+        <Button @onclick="calc" Color="ButtonColor.Primary">Przelicz</Button>
+        <br />
+        <br />
+    </fieldset>
+    <Button Style="margin-bottom:20px" Type="ButtonType.Button" Color="ButtonColor.Primary" @onclick="ToggleContentAsync">Wyślij maila</Button>
+    <Collapse @ref="Mail_window">
+        <Card>
+            
+        </Card>
+    </Collapse>
+}
+else
+{
+    <p>Proszę czekać, trwa zbieranie danych...</p>
+}
+
+
+
+
+@code {
+    Collapse Mail_window = default!;
+    Dictionary<string, decimal> perfect;
+    ExchangeRatesTable dane;
+    public string FromCurrency = "";
+    public string ToCurrency = "";
+    decimal amount;
+    decimal amountCalculated = 0;
+
+    Regex r = new Regex("^[1-9][0-9]*[.,]?[0-9]{0,2}$");
+    private async Task ToggleContentAsync() => await Mail_window.ToggleAsync();
+    
+    
+    async public Task calc()
+    {
+        if (FromCurrency.Equals(ToCurrency))
+        {
+            await JS.InvokeVoidAsync("alert", "Konwersja z tej samej waluty na tą samą walutę nie ma sensu.");
+        }
+        else if (amount == 0)
+        {
+            await JS.InvokeVoidAsync("alert", "Podaj Wartość różną 0.");
+        }
+        else if (r.Match(amount.ToString()).Success)
+        {
+            amountCalculated = Math.Round((perfect[FromCurrency] * amount / perfect[ToCurrency]), 2);
+            File.AppendAllText("C:/Log/Log.json", JsonConvert.SerializeObject(new Transaction(DateTime.Now, FromCurrency, ToCurrency, amount, amountCalculated)) + ",");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", "Podano złą wartość w polu liczbowym. Poprawna wartość zawiera jedną kropkę lub przecinek, i ma maksymalnie 2 miejsca po przecinku");
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var link = "http://api.nbp.pl/api/exchangerates/tables/a/?format=json";
+        HttpResponseMessage response = await Http.GetAsync(link);
+        if (response.IsSuccessStatusCode)
+        {
+            string Data_aquired = await response.Content.ReadAsStringAsync();
+            string Data_remake = Data_aquired.Substring(1).Remove(Data_aquired.Count() - 2);
+            dane = JsonConvert.DeserializeObject<ExchangeRatesTable>(Data_remake);
+            dane.Rates.Add(new ExchangeRate() { Mid = 1m, Code = "PLN", Currency = "Złoty" });
+            perfect = dane.Rates.ToDictionary(x => x.Code, a => a.Mid);
+        }
+    }
+
+
+
+}

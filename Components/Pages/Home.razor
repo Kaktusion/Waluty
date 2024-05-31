@@ -1,0 +1,60 @@
+﻿@page "/"
+@attribute [StreamRendering(true)]
+@inject HttpClient Http
+
+<link href="./Style/Home.css" rel="stylesheet">
+
+<PageTitle>Strona Domowa</PageTitle>
+<link href="./styles/Home.css" rel="stylesheet" />
+
+@if (data == null)
+{
+    <div class="Loading">
+        <div style="width:fit-content;height:fit-content;">
+            <Spinner  Color="SpinnerColor.Primary" Size="SpinnerSize.ExtraLarge" />
+        </div>
+    </div>
+
+}
+else
+{
+    <h1>Oto tabela kursów walut z @data.EffectiveDate.</h1>
+    <table class="exchange-table">
+        <thead>
+            <tr>
+                <td> <h5>Nazwa </h5></td>
+                <td> <h5>Kod Waluty </h5></td>
+                <td> <h5>Kurs (w PLN)</h5></td>
+            </tr>
+        </thead>
+        @foreach (var rate in data.Rates)
+        {
+            <tr>
+                <td>@rate.Currency</td>
+                <td> @rate.Code </td>
+                <td>@rate.Mid</td>
+            </tr>
+        }
+    </table>
+}
+@code {
+    ExchangeRatesTable data;
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(2000);
+        var link = "http://api.nbp.pl/api/exchangerates/tables/a/?format=json";
+        HttpResponseMessage response = await Http.GetAsync(link);
+
+
+        if (response.IsSuccessStatusCode)
+        {
+            string Data_aquired = await response.Content.ReadAsStringAsync();
+            string Data_remake = Data_aquired.Substring(1).Remove(Data_aquired.Count() - 2);
+            data = JsonConvert.DeserializeObject<ExchangeRatesTable>(Data_remake);
+        }
+    }
+}
+
+
+
+
