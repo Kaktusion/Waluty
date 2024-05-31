@@ -63,7 +63,7 @@
     <Button Style="margin-bottom:20px" Type="ButtonType.Button" Color="ButtonColor.Primary" @onclick="ToggleContentAsync">Wyślij maila</Button>
     <Collapse @ref="Mail_window">
         <Card>
-            
+
         </Card>
     </Collapse>
 }
@@ -76,6 +76,7 @@ else
 
 
 @code {
+
     Collapse Mail_window = default!;
     Dictionary<string, decimal> perfect;
     ExchangeRatesTable dane;
@@ -83,11 +84,20 @@ else
     public string ToCurrency = "";
     decimal amount;
     decimal amountCalculated = 0;
+    string Message_reciever;
 
     Regex r = new Regex("^[1-9][0-9]*[.,]?[0-9]{0,2}$");
     private async Task ToggleContentAsync() => await Mail_window.ToggleAsync();
-    
-    
+
+
+    async private Task SendMessage()
+    {
+        using (var client = new SmtpClient())
+        {
+            MailMessage message = new MailMessage("Kleminski.kleminski@mondigroup.com", Message_reciever,"Log konwertera","Oto i log konwertera zapisany w formacie .json");
+        }
+    }
+
     async public Task calc()
     {
         if (FromCurrency.Equals(ToCurrency))
@@ -101,7 +111,13 @@ else
         else if (r.Match(amount.ToString()).Success)
         {
             amountCalculated = Math.Round((perfect[FromCurrency] * amount / perfect[ToCurrency]), 2);
-            File.AppendAllText("C:/Log/Log.json", JsonConvert.SerializeObject(new Transaction(DateTime.Now, FromCurrency, ToCurrency, amount, amountCalculated)) + ",");
+            string edit = File.ReadAllText("C:/Log/Log.json");
+            Console.WriteLine(edit);
+            var transactions = JsonConvert.DeserializeObject<List<Transaction>>(edit);
+            transactions.Add(new Transaction(DateTime.Now,FromCurrency,ToCurrency,amount,amountCalculated));
+            
+            File.WriteAllText("C:/Log/Log.json", JsonConvert.SerializeObject(transactions));
+
         }
         else
         {
