@@ -7,12 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Blazor.Bootstrap" Version="2.2.0" />
-    <PackageReference Include="Newtonsoft.json" Version="13.0.3" />
+    <Compile Remove="Components\Nowy folder\**" />
+    <Content Remove="Components\Nowy folder\**" />
+    <EmbeddedResource Remove="Components\Nowy folder\**" />
+    <None Remove="Components\Nowy folder\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Components\Nowy folder\" />
+    <PackageReference Include="Blazor.Bootstrap" Version="2.2.0" />
+    <PackageReference Include="Newtonsoft.json" Version="13.0.3" />
   </ItemGroup>
 
   <ItemGroup>
