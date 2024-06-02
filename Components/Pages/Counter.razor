@@ -108,7 +108,7 @@ else
 	async private Task SendMessage()
 	{
 		using (var client = new SmtpClient("smtp.office365.com"){ Port = 587, Credentials = new System.Net.NetworkCredential(), EnableSsl = true })
-	{
+		{
 			MailMessage message = new MailMessage("Kleminski.kleminski@mondigroup.com", Message_reciever, "Log konwertera", "Oto i log konwertera zapisany w formacie .json");
 		}
 	}
